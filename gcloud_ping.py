@@ -73,8 +73,6 @@ class Region:
             rtt_ms = int(ping_response.elapsed.total_seconds() * 1000)
         except Exception as e:
             print(f"Error while pinging {self.id} ({ping_url}): {e}", file=sys.stderr)
-        if self.ping_count in [0, 9, 15, 37]:
-            rtt_ms = 10000
         self.rtt_ms_list.append(rtt_ms)
         return rtt_ms
 
