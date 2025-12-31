@@ -10,4 +10,4 @@ gcloud_ping.py --csv --count 10 --interval 1 us-east1 us-west1 us-central1
 
 Use `--help`.
 
-The average is calculated using a [Winsorized Mean](https://en.wikipedia.org/wiki/Winsorizing), which is basically a [Trimmed Mean](https://en.wikipedia.org/wiki/Truncated_mean) but clamps outliers instead of discarding them.
+The average is calculated using a [Winsorized Mean](https://en.wikipedia.org/wiki/Winsorizing), which is basically a [Trimmed Mean](https://en.wikipedia.org/wiki/Truncated_mean) but clamps outliers instead of discarding them. The lower and upper limits were chosen ~carefully~ arbitrarily.
