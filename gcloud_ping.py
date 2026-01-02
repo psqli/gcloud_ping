@@ -75,12 +75,12 @@ class Region:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Ping Google Cloud Platform regions")
-    parser.add_argument("--csv", action="store_true", help="Output in CSV format")
-    parser.add_argument("--count", type=int, default=0, help="Number of pings to perform (0 for infinite)")
-    parser.add_argument("--interval", type=float, default=0.5, help="Interval between pings in seconds")
-    parser.add_argument("--list", action="store_true", help="List regions without pinging")
-    parser.add_argument("regions", nargs="*", help="Regions to ping / list (if omitted, defaults to all regions)")
+    parser = argparse.ArgumentParser(description="Ping Google Cloud Platform regions.")
+    parser.add_argument("regions", nargs="*", help="Regions to ping / list (if omitted, defaults to all regions).")
+    parser.add_argument("--csv", action="store_true", help="Output in CSV format.")
+    parser.add_argument("-c", "--ping-count", type=int, default=-1, help="Number of ping cycles.")
+    parser.add_argument("-i", "--ping-interval", type=float, default=1, help="Interval (in seconds) between ping cycles.")
+    parser.add_argument("-l", "--list", action="store_true", help="List regions without pinging.")
     return parser.parse_args()
 
 
@@ -125,7 +125,7 @@ def main():
     # Start a loop to ping continuously
     count = 0
     try:
-        while count < args.count or args.count == 0:
+        while count < args.count or args.count < 0:
             count += 1
 
             # Print the regions

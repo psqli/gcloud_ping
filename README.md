@@ -2,20 +2,22 @@
 
 This is based on the Google's official tool [gcping](https://github.com/GoogleCloudPlatform/gcping).
 
+Usage:
+
+```sh
+gcloud_ping.py [-h] [--csv] [-c PING_COUNT] [-i PING_INTERVAL] [--list] [regions ...]
 ```
-usage: gcloud_ping.py [-h] [--csv] [--count COUNT] [--interval INTERVAL] [--list] [regions ...]
 
-Ping Google Cloud Platform regions
+Positional arguments:
+- `regions` Regions to ping / list (if omitted, defaults to all regions).
 
-positional arguments:
-  regions              Regions to ping / list (if omitted, defaults to all regions)
+Options:
+- `-h` `--help` Show the help message and exit.
+- `--csv` Output in CSV format.
+- `-c` `--ping-count PING_COUNT` Number of ping cycles. Default is `-1` which is indefinite.
+- `-i` `--ping-interval PING_INTERVAL` Interval (in seconds) between ping cycles. Default is `1`.
+- `-l` `--list` List regions without pinging.
 
-options:
-  -h, --help           show this help message and exit
-  --csv                Output in CSV format
-  --count COUNT        Number of pings to perform (0 for infinite)
-  --interval INTERVAL  Interval between pings in seconds
-  --list               List regions without pinging
-```
+A ping cycle is the pinging of all regions specified.
 
 The average is calculated using a [Winsorized Mean](https://en.wikipedia.org/wiki/Winsorizing), which is basically a [Trimmed Mean](https://en.wikipedia.org/wiki/Truncated_mean) but clamps outliers instead of discarding them. The lower and upper limits were chosen ~carefully~ arbitrarily.
