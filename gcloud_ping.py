@@ -53,7 +53,7 @@ class Region:
         if not values:
             return -1
         # Apply the winsorize function. Instead of discarding outliers, it does set them to the limit values.
-        winsorized_values = winsorize(values, low_limit=0.05, up_limit=0.10)
+        winsorized_values = winsorize(values, lower_limit=0.05, upper_limit=0.10)
         return int(sum(winsorized_values) / len(winsorized_values))
 
     @property
