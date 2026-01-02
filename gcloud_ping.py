@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 
+import http.client
+import json
 import sys
-import time
-import argparse
-import requests
+
+from argparse import ArgumentParser
+from time import perf_counter_ns, sleep
+from urllib.parse import urlparse
 
 cloud_regions_url = "https://gcping.com/api/endpoints"
 
@@ -31,9 +34,9 @@ class Region:
     def __init__(self, region_id, name, url):
         self.id = region_id
         self.name = name
-        self.url = url
+        self.url = urlparse(url)
         self.rtt_ms_list = []
-        self.session = requests.Session()
+        self.conn = http.client.HTTPSConnection(self.url.hostname, timeout=5)
 
     @classmethod
     def from_dict(cls, data):
@@ -61,21 +64,25 @@ class Region:
         return self.rtt_ms_list[-1] if self.rtt_ms_list else -1
 
     def ping(self):
-        ping_url = f"{self.url}/api/ping"
         rtt_ms = -1
         try:
-            ping_response = self.session.get(ping_url, timeout=5)
-            if ping_response.status_code != 200:
-                raise Exception(f"Unexpected status code: {ping_response.status_code}")
-            rtt_ms = int(ping_response.elapsed.total_seconds() * 1000)
-        except Exception as e:
-            print(f"Error while pinging {self.id} ({ping_url}): {e}", file=sys.stderr)
+            start = perf_counter_ns()
+            self.conn.request("GET", "/api/ping")
+            res = self.conn.getresponse()
+            _ = res.read()
+            end = perf_counter_ns()
+            if res.status == http.client.OK:
+                rtt_ms = (end - start) // 1000000
+            else:
+                print(f"Unexpected status code while pinging {self.id}: {res.status}", file=sys.stderr)
+        except http.client.HTTPException as e:
+            print(f"Error while pinging {self.id}: {e}", file=sys.stderr)
         self.rtt_ms_list.append(rtt_ms)
         return rtt_ms
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Ping Google Cloud Platform regions.")
+    parser = ArgumentParser(description="Ping Google Cloud Platform regions.")
     parser.add_argument("regions", nargs="*", help="Regions to ping / list (if omitted, defaults to all regions).")
     parser.add_argument("--csv", action="store_true", help="Output in CSV format.")
     parser.add_argument("-c", "--ping-count", type=int, default=-1, help="Number of ping cycles.")
@@ -87,16 +94,26 @@ def parse_args():
 def main():
     args = parse_args()
 
+    cloud_regions_url_obj = urlparse(cloud_regions_url)
+
     # Get the JSON with the ping addresses of Google Cloud Platform regions
     try:
-        response = requests.get(cloud_regions_url, timeout=10)
-        response.raise_for_status()
-    except requests.RequestException as e:
+        conn = http.client.HTTPSConnection(cloud_regions_url_obj.hostname, timeout=5)
+        conn.request("GET", cloud_regions_url_obj.path)
+        res = conn.getresponse()
+        if res.status != http.client.OK:
+            print(f"Expected status {http.client.OK}, but got {res.status}", file=sys.stderr)
+            sys.exit(1)
+        res_obj = json.loads(res.read())
+    except http.client.HTTPException as e:
         print(f"Error fetching regions: {e}", file=sys.stderr)
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"Error parsing JSON: {e}", file=sys.stderr)
         sys.exit(1)
 
     # Select only the regions of interest
-    region_data_list = [r for r in response.json().values() if not args.regions or r["Region"] in args.regions]
+    region_data_list = [r for r in res_obj.values() if not args.regions or r["Region"] in args.regions]
 
     if not region_data_list:
         print("No regions found matching the criteria.", file=sys.stderr)
@@ -137,7 +154,7 @@ def main():
                 else:
                     print(f"{region.id:.<{max_region_len}}{region.cur_rtt_ms:.>12d}{region.avg_rtt_ms:.>12d}{region.ping_count:.>8d}")
 
-            time.sleep(args.ping_interval)
+            sleep(args.ping_interval)
     except KeyboardInterrupt:
         print("\nUser stopped the program.", file=sys.stderr)
 
