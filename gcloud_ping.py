@@ -79,7 +79,8 @@ def parse_args():
     parser.add_argument("--csv", action="store_true", help="Output in CSV format")
     parser.add_argument("--count", type=int, default=0, help="Number of pings to perform (0 for infinite)")
     parser.add_argument("--interval", type=float, default=0.5, help="Interval between pings in seconds")
-    parser.add_argument("regions", nargs="+", help="List of region IDs to ping (use 'all' to ping all regions)")
+    parser.add_argument("--list", action="store_true", help="List regions without pinging")
+    parser.add_argument("regions", nargs="*", help="Regions to ping / list (if omitted, defaults to all regions)")
     return parser.parse_args()
 
 
@@ -95,14 +96,24 @@ def main():
         sys.exit(1)
 
     # Select only the regions of interest
-    region_data_list = [r for r in response.json().values() if args.regions == ["all"] or r["Region"] in args.regions]
+    region_data_list = [r for r in response.json().values() if not args.regions or r["Region"] in args.regions]
+
+    if not region_data_list:
+        print("No regions found matching the criteria.", file=sys.stderr)
+        sys.exit(1)
+
+    if args.list:
+        if args.csv:
+            print("region,name,url")
+        for region_data in region_data_list:
+            if args.csv:
+                print(f"{region_data["Region"]},{region_data["RegionName"]},{region_data["URL"]}")
+            else:
+                print(region_data["Region"])
+        sys.exit(0)
 
     # For each region, create an object with the necessary context for pinging
     regions = [Region.from_dict(region_data) for region_data in region_data_list]
-
-    if not regions:
-        print("No regions found matching the criteria.", file=sys.stderr)
-        sys.exit(1)
 
     # Print CSV header if needed
     if args.csv:
