@@ -125,7 +125,7 @@ def main():
     # Start a loop to ping continuously
     count = 0
     try:
-        while count < args.count or args.count < 0:
+        while count < args.ping_count or args.ping_count < 0:
             count += 1
 
             # Print the regions
@@ -137,7 +137,7 @@ def main():
                 else:
                     print(f"{region.id:.<{max_region_len}}{region.cur_rtt_ms:.>12d}{region.avg_rtt_ms:.>12d}{region.ping_count:.>8d}")
 
-            time.sleep(args.interval)
+            time.sleep(args.ping_interval)
     except KeyboardInterrupt:
         print("\nUser stopped the program.", file=sys.stderr)
 
