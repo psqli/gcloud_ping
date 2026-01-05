@@ -8,7 +8,7 @@ from argparse import ArgumentParser
 from time import perf_counter_ns, sleep
 from urllib.parse import urlparse
 
-cloud_regions_url = "https://gcping.com/api/endpoints"
+CLOUD_REGIONS_URL = "https://gcping.com/api/endpoints"
 
 # Based on https://github.com/scipy/scipy/blob/v1.16.3/scipy/stats/_mstats_basic.py#L2619
 def winsorize(l, lower_limit=None, upper_limit=None):
@@ -94,7 +94,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-    cloud_regions_url_obj = urlparse(cloud_regions_url)
+    cloud_regions_url_obj = urlparse(CLOUD_REGIONS_URL)
 
     # Get the JSON with the ping addresses of Google Cloud Platform regions
     try:
