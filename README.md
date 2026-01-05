@@ -21,3 +21,8 @@ Options:
 A ping cycle is the pinging of all regions specified.
 
 The average is calculated using a [Winsorized Mean](https://en.wikipedia.org/wiki/Winsorizing), which is basically a [Trimmed Mean](https://en.wikipedia.org/wiki/Truncated_mean) but clamps outliers instead of discarding them. The lower and upper limits were chosen ~carefully~ arbitrarily.
+
+## Google's current IP addresses
+
+- For clients of Google Cloud Platform, see [Google Cloud Platform IP ranges per region](https://www.gstatic.com/ipranges/cloud.json).
+- For other Google services, see [Google user IP ranges](https://www.gstatic.com/ipranges/goog.json).
