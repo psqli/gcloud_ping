@@ -10,6 +10,9 @@ from urllib.parse import urlparse
 
 CLOUD_REGIONS_URL = "https://gcping.com/api/endpoints"
 
+WINSORIZED_MEAN_LOWER_LIMIT=0.05
+WINSORIZED_MEAN_UPPER_LIMIT=0.10
+
 # Based on https://github.com/scipy/scipy/blob/v1.16.3/scipy/stats/_mstats_basic.py#L2619
 def winsorize(l, lower_limit=None, upper_limit=None):
     l_copy = list(l)
@@ -56,7 +59,9 @@ class Region:
         if not values:
             return -1
         # Apply the winsorize function. Instead of discarding outliers, it does set them to the limit values.
-        winsorized_values = winsorize(values, lower_limit=0.05, upper_limit=0.10)
+        winsorized_values = winsorize(values,
+                                      lower_limit=WINSORIZED_MEAN_LOWER_LIMIT,
+                                      upper_limit=WINSORIZED_MEAN_UPPER_LIMIT)
         return int(sum(winsorized_values) / len(winsorized_values))
 
     @property
