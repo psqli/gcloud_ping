@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import concurrent.futures
 import http.client
 import json
 import sys
@@ -147,19 +148,17 @@ def main():
     # Start a loop to ping continuously
     count = 0
     try:
-        while count < args.ping_count or args.ping_count < 0:
-            count += 1
-
-            # Print the regions
-            for region in regions:
-                region.ping()
-
-                if args.csv:
-                    print(f"{region.id},{region.cur_rtt_ms},{region.avg_rtt_ms},{region.ping_count}")
-                else:
-                    print(f"{region.id:.<{max_region_len}}{region.cur_rtt_ms:.>12d}{region.avg_rtt_ms:.>12d}{region.ping_count:.>8d}")
-
-            sleep(args.ping_interval)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(regions)) as executor:
+            while count < args.ping_count or args.ping_count < 0:
+                count += 1
+                futures = [executor.submit(region.ping) for region in regions]
+                concurrent.futures.wait(futures, return_when=concurrent.futures.ALL_COMPLETED)
+                for region in regions:
+                    if args.csv:
+                        print(f"{region.id},{region.cur_rtt_ms},{region.avg_rtt_ms},{region.ping_count}")
+                    else:
+                        print(f"{region.id:.<{max_region_len}}{region.cur_rtt_ms:.>12d}{region.avg_rtt_ms:.>12d}{region.ping_count:.>8d}")
+                sleep(args.ping_interval)
     except KeyboardInterrupt:
         print("\nUser stopped the program.", file=sys.stderr)
 
