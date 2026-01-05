@@ -14,7 +14,7 @@ Positional arguments:
 Options:
 - `-h` `--help` Show the help message and exit.
 - `--csv` Output in CSV format.
-- `-c` `--ping-count PING_COUNT` Number of ping cycles. Default is `-1` which is indefinite.
+- `-c` `--ping-count PING_COUNT` Number of ping cycles. Default is `64`.
 - `-i` `--ping-interval PING_INTERVAL` Interval (in seconds) between ping cycles. Default is `1`.
 - `-l` `--list` List regions without pinging.
 

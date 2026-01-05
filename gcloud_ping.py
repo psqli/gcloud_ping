@@ -91,7 +91,7 @@ def parse_args():
     parser = ArgumentParser(description="Ping Google Cloud Platform regions.")
     parser.add_argument("regions", nargs="*", help="Regions to ping / list (if omitted, defaults to all regions).")
     parser.add_argument("--csv", action="store_true", help="Output in CSV format.")
-    parser.add_argument("-c", "--ping-count", type=int, default=-1, help="Number of ping cycles.")
+    parser.add_argument("-c", "--ping-count", type=int, default=64, help="Number of ping cycles.")
     parser.add_argument("-i", "--ping-interval", type=float, default=1, help="Interval (in seconds) between ping cycles.")
     parser.add_argument("-l", "--list", action="store_true", help="List regions without pinging.")
     return parser.parse_args()
@@ -149,8 +149,7 @@ def main():
     count = 0
     try:
         with concurrent.futures.ThreadPoolExecutor(max_workers=len(regions)) as executor:
-            while count < args.ping_count or args.ping_count < 0:
-                count += 1
+            while count < args.ping_count:
                 futures = [executor.submit(region.ping) for region in regions]
                 concurrent.futures.wait(futures, return_when=concurrent.futures.ALL_COMPLETED)
                 for region in regions:
@@ -158,7 +157,9 @@ def main():
                         print(f"{region.id},{region.cur_rtt_ms},{region.avg_rtt_ms},{region.ping_count}")
                     else:
                         print(f"{region.id:.<{max_region_len}}{region.cur_rtt_ms:.>12d}{region.avg_rtt_ms:.>12d}{region.ping_count:.>8d}")
-                sleep(args.ping_interval)
+                count += 1
+                if count < args.ping_count:
+                    sleep(args.ping_interval)
     except KeyboardInterrupt:
         print("\nUser stopped the program.", file=sys.stderr)
 
