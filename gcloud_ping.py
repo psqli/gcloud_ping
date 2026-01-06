@@ -70,7 +70,7 @@ class Region:
             res = self._conn.getresponse()
             _ = res.read()
             if res.status != http.client.OK:
-                raise ValueError(f"Unexpected status code: {res.status}")
+                raise ValueError(f"Unexpected HTTP status code: {res.status}")
             interval_ns = perf_counter_ns() - start_ns
             self._measurements.append(interval_ns)
             # Apply the winsorize function. Instead of discarding outliers, it does set them to the limit values.
@@ -80,7 +80,7 @@ class Region:
             self._average_rtt_ns = sum(winsorized_values) // len(winsorized_values)
             return self.last_rtt_ms
         except (http.client.HTTPException, ValueError) as e:
-            print(f"Error while pinging {self.id}: {e}", file=sys.stderr)
+            print(f"Error while pinging {self.id}: {type(e).__name__}: {e}", file=sys.stderr)
             return None
 
 
@@ -106,10 +106,10 @@ def main():
         conn.request("GET", cloud_regions_url_obj.path)
         res = conn.getresponse()
         if res.status != http.client.OK:
-            raise ValueError(f"Unexpected status code: {res.status}")
+            raise ValueError(f"Unexpected HTTP status code: {res.status}")
         res_obj = json.loads(res.read())
     except (http.client.HTTPException, json.JSONDecodeError, ValueError) as e:
-        print(f"Error while fetching regions: {e}", file=sys.stderr)
+        print(f"Error while fetching the list of regions: {type(e).__name__}: {e}", file=sys.stderr)
         sys.exit(1)
 
     # Select only the regions of interest
