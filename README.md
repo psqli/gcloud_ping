@@ -5,7 +5,7 @@ This is based on the Google's official tool [gcping](https://github.com/GoogleCl
 Usage:
 
 ```sh
-gcloud_ping.py [-h] [--csv] [-c PING_COUNT] [-i PING_INTERVAL] [--list] [regions ...]
+gcloud_ping.py [-h] [--csv] [-c PING_COUNT] [-i PING_INTERVAL] [--sort] [--list] [regions ...]
 ```
 
 Positional arguments:
