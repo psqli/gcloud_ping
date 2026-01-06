@@ -15,20 +15,20 @@ WINSORIZED_MEAN_LOWER_LIMIT=0.05
 WINSORIZED_MEAN_UPPER_LIMIT=0.10
 
 # Based on https://github.com/scipy/scipy/blob/v1.16.3/scipy/stats/_mstats_basic.py#L2619
-def winsorize(l, lower_limit=None, upper_limit=None):
+def winsorize(l, lower_limit=0, upper_limit=0):
     l_copy = list(l)
     n = len(l_copy)
     if n == 0:
         return l_copy
     # Sort the indexes according to element values
     idx = sorted(range(n), key=l_copy.__getitem__)
-    if lower_limit >= 0 and lower_limit <= 1:
-        lower_index = min(int(lower_limit * n), n-1)
+    lower_index = int(lower_limit * n)
+    if lower_index > 0 and lower_index < n:
         lower_val = l_copy[idx[lower_index]]
         for i in range(0, lower_index):
             l_copy[idx[i]] = lower_val
-    if upper_limit >= 0 and upper_limit <= 1:
-        upper_index = n - min(int(upper_limit * n), n-1)
+    upper_index = n - int(upper_limit * n)
+    if upper_index > 0 and upper_index < n:
         upper_val = l_copy[idx[upper_index-1]]
         for i in range(upper_index, n):
             l_copy[idx[i]] = upper_val
