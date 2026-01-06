@@ -128,7 +128,7 @@ def main():
             print("region,name,url")
         for region_data in region_data_list:
             if args.csv:
-                print(f"{region_data["Region"]},{region_data["RegionName"]},{region_data["URL"]}")
+                print(f"{region_data['Region']},{region_data['RegionName']},{region_data['URL']}")
             else:
                 print(region_data["Region"])
         sys.exit(0)
