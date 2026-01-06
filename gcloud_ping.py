@@ -39,8 +39,8 @@ class Region:
         self.id = region_id
         self.name = name
         self.url = urlparse(url)
+        self._conn = http.client.HTTPSConnection(self.url.hostname, timeout=5)
         self.rtt_ms_list = []
-        self.conn = http.client.HTTPSConnection(self.url.hostname, timeout=5)
 
     @classmethod
     def from_dict(cls, data):
@@ -73,8 +73,8 @@ class Region:
         rtt_ms = -1
         try:
             start = perf_counter_ns()
-            self.conn.request("GET", "/api/ping")
-            res = self.conn.getresponse()
+            self._conn.request("GET", "/api/ping")
+            res = self._conn.getresponse()
             _ = res.read()
             end = perf_counter_ns()
             if res.status == http.client.OK:
