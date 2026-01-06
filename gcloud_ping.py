@@ -106,14 +106,10 @@ def main():
         conn.request("GET", cloud_regions_url_obj.path)
         res = conn.getresponse()
         if res.status != http.client.OK:
-            print(f"Expected status {http.client.OK}, but got {res.status}", file=sys.stderr)
-            sys.exit(1)
+            raise ValueError(f"Unexpected status code: {res.status}")
         res_obj = json.loads(res.read())
-    except http.client.HTTPException as e:
-        print(f"Error fetching regions: {e}", file=sys.stderr)
-        sys.exit(1)
-    except json.JSONDecodeError as e:
-        print(f"Error parsing JSON: {e}", file=sys.stderr)
+    except (http.client.HTTPException, json.JSONDecodeError, ValueError) as e:
+        print(f"Error while fetching regions: {e}", file=sys.stderr)
         sys.exit(1)
 
     # Select only the regions of interest
