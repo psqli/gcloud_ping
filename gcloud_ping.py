@@ -40,7 +40,8 @@ class Region:
         self.name = name
         self.url = urlparse(url)
         self._conn = http.client.HTTPSConnection(self.url.hostname, timeout=5)
-        self.rtt_ms_list = []
+        self._measurements = []
+        self._average_rtt_ns = None
 
     @classmethod
     def from_dict(cls, data):
@@ -51,40 +52,36 @@ class Region:
         )
 
     @property
+    def average_rtt_ms(self):
+        return self._average_rtt_ns // 1000000 if self._average_rtt_ns is not None else -1
+
+    @property
+    def last_rtt_ms(self):
+        return self._measurements[-1] // 1000000 if self._measurements else -1
+
+    @property
     def ping_count(self):
-        return len(self.rtt_ms_list)
-
-    @property
-    def avg_rtt_ms(self):
-        values = [v for v in self.rtt_ms_list if v != -1]
-        if not values:
-            return -1
-        # Apply the winsorize function. Instead of discarding outliers, it does set them to the limit values.
-        winsorized_values = winsorize(values,
-                                      lower_limit=WINSORIZED_MEAN_LOWER_LIMIT,
-                                      upper_limit=WINSORIZED_MEAN_UPPER_LIMIT)
-        return int(sum(winsorized_values) / len(winsorized_values))
-
-    @property
-    def cur_rtt_ms(self):
-        return self.rtt_ms_list[-1] if self.rtt_ms_list else -1
+        return len(self._measurements)
 
     def ping(self):
-        rtt_ms = -1
         try:
-            start = perf_counter_ns()
+            start_ns = perf_counter_ns()
             self._conn.request("GET", "/api/ping")
             res = self._conn.getresponse()
             _ = res.read()
-            end = perf_counter_ns()
-            if res.status == http.client.OK:
-                rtt_ms = (end - start) // 1000000
-            else:
-                print(f"Unexpected status code while pinging {self.id}: {res.status}", file=sys.stderr)
-        except http.client.HTTPException as e:
+            if res.status != http.client.OK:
+                raise ValueError(f"Unexpected status code: {res.status}")
+            interval_ns = perf_counter_ns() - start_ns
+            self._measurements.append(interval_ns)
+            # Apply the winsorize function. Instead of discarding outliers, it does set them to the limit values.
+            winsorized_values = winsorize(self._measurements,
+                                          lower_limit=WINSORIZED_MEAN_LOWER_LIMIT,
+                                          upper_limit=WINSORIZED_MEAN_UPPER_LIMIT)
+            self._average_rtt_ns = sum(winsorized_values) // len(winsorized_values)
+            return self.last_rtt_ms
+        except (http.client.HTTPException, ValueError) as e:
             print(f"Error while pinging {self.id}: {e}", file=sys.stderr)
-        self.rtt_ms_list.append(rtt_ms)
-        return rtt_ms
+            return None
 
 
 def parse_args():
@@ -93,6 +90,7 @@ def parse_args():
     parser.add_argument("--csv", action="store_true", help="Output in CSV format.")
     parser.add_argument("-c", "--ping-count", type=int, default=64, help="Number of ping cycles.")
     parser.add_argument("-i", "--ping-interval", type=float, default=1, help="Interval (in seconds) between ping cycles.")
+    parser.add_argument("-s", "--sort", action="store_true", help="Sort results by average RTT (ascending).")
     parser.add_argument("-l", "--list", action="store_true", help="List regions without pinging.")
     return parser.parse_args()
 
@@ -152,11 +150,13 @@ def main():
             while count < args.ping_count:
                 futures = [executor.submit(region.ping) for region in regions]
                 concurrent.futures.wait(futures, return_when=concurrent.futures.ALL_COMPLETED)
+                if args.sort:
+                    regions.sort(key=lambda r: r.average_rtt_ms)
                 for region in regions:
                     if args.csv:
-                        print(f"{region.id},{region.cur_rtt_ms},{region.avg_rtt_ms},{region.ping_count}")
+                        print(f"{region.id},{region.last_rtt_ms},{region.average_rtt_ms},{region.ping_count}")
                     else:
-                        print(f"{region.id:.<{max_region_len}}{region.cur_rtt_ms:.>12d}{region.avg_rtt_ms:.>12d}{region.ping_count:.>8d}")
+                        print(f"{region.id:.<{max_region_len}}{region.last_rtt_ms:.>12d}{region.average_rtt_ms:.>12d}{region.ping_count:.>8d}")
                 count += 1
                 if count < args.ping_count:
                     sleep(args.ping_interval)

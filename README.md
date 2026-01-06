@@ -16,6 +16,7 @@ Options:
 - `--csv` Output in CSV format.
 - `-c` `--ping-count PING_COUNT` Number of ping cycles. Default is `64`.
 - `-i` `--ping-interval PING_INTERVAL` Interval (in seconds) between ping cycles. Default is `1`.
+- `-s` `--sort` Sort regions by average RTT (ascending) when printing the results.
 - `-l` `--list` List regions without pinging.
 
 A ping cycle is the pinging of all regions specified.
